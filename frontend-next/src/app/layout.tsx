@@ -16,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: "风行智聘 - Recruitment Intelligence",
+  title: "风行11智聘 - Recruitment Intelligence",
   description: "",
 };
 
