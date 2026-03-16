@@ -334,7 +334,8 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
       setItems(normalized);
     } catch (error) {
       console.error(error);
-      toast.error("获取招聘数据失败");
+      // 避免 Turbopack 崩溃，只显示错误信息
+      toast.error("获取招聘数据失败，请检查后端服务是否运行");
     } finally {
       setIsLoading(false);
     }
@@ -349,7 +350,8 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
       setInterviews(filtered);
     } catch (error) {
       console.error(error);
-      toast.error("获取面试数据失败");
+      // 避免 Turbopack 崩溃，只显示错误信息
+      toast.error("获取面试数据失败，请检查后端服务是否运行");
     }
   }, []);
 
@@ -363,14 +365,17 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
       setFocusInterviews(filtered);
     } catch (error) {
       console.error(error);
-      toast.error("获取重点关注名单失败");
+      // 避免 Turbopack 崩溃，只显示错误信息
+      toast.error("获取重点关注名单失败，请检查后端服务是否运行");
     }
   }, []);
 
+  // 初始加载时发送 API 请求，获取数据
   useEffect(() => {
     void fetchItems();
   }, [fetchItems]);
 
+  // 当视图切换时发送 API 请求，获取数据
   useEffect(() => {
     if (currentView === "social-interview-board" || currentView === "social-arrange-interview") {
       void loadInterviews();
