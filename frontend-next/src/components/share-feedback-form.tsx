@@ -23,6 +23,12 @@ export function ShareFeedbackForm(props: ShareFeedbackFormProps) {
   const [error, setError] = useState("");
   const [interview, setInterview] = useState<ShareInterviewInfo | null>(null);
   const [feedback, setFeedback] = useState("");
+  const [productSense, setProductSense] = useState(0);
+  const [systemDesign, setSystemDesign] = useState(0);
+  const [agentAbility, setAgentAbility] = useState(0);
+  const [communication, setCommunication] = useState(0);
+  const [ownership, setOwnership] = useState(0);
+  const [learningSpeed, setLearningSpeed] = useState(0);
 
   useEffect(() => {
     const loadInterview = async () => {
@@ -51,7 +57,15 @@ export function ShareFeedbackForm(props: ShareFeedbackFormProps) {
     }
     try {
       setSubmitting(true);
-      await api.post(`/api/interviews/share/${shareId}/feedback`, { feedback });
+      await api.post(`/api/interviews/share/${shareId}/feedback`, {
+        feedback,
+        productSense,
+        systemDesign,
+        agentAbility,
+        communication,
+        ownership,
+        learningSpeed
+      });
       setSubmitted(true);
       toast.success("反馈提交成功");
     } catch (err) {
@@ -117,10 +131,122 @@ export function ShareFeedbackForm(props: ShareFeedbackFormProps) {
             <Info label="时间" value={interview?.interviewTime || "-"} />
           </div>
 
+          <div className="space-y-4">
+            <Label>评价维度打分</Label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">1、产品感和结果品味（1-20分）</label>
+                  <p className="text-xs text-slate-500">能精准定义核心问题，清晰判断价值与目标，不盲目纠结实现细节。</p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={productSense || ''}
+                    onChange={(event) => setProductSense(Math.max(1, Math.min(20, parseInt(event.target.value) || 1)))} 
+                    className="w-20 rounded-md border border-slate-300 px-3 py-2 text-center text-sm"
+                  />
+                  <span className="ml-2 text-sm text-slate-500">分</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">2、系统与架构判断力（1-20分）</label>
+                  <p className="text-xs text-slate-500">能评估方案的可行性、长期健康性与演进空间，兼顾落地成本与维护性。</p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={systemDesign || ''}
+                    onChange={(event) => setSystemDesign(Math.max(1, Math.min(20, parseInt(event.target.value) || 1)))} 
+                    className="w-20 rounded-md border border-slate-300 px-3 py-2 text-center text-sm"
+                  />
+                  <span className="ml-2 text-sm text-slate-500">分</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">3、Agent 杠杆能力（1-20分）</label>
+                  <p className="text-xs text-slate-500">善用AI拆解任务、引导输出并快速纠偏，能评估结果并优化。</p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max="20"
+                    value={agentAbility || ''}
+                    onChange={(event) => setAgentAbility(Math.max(1, Math.min(20, parseInt(event.target.value) || 1)))} 
+                    className="w-20 rounded-md border border-slate-300 px-3 py-2 text-center text-sm"
+                  />
+                  <span className="ml-2 text-sm text-slate-500">分</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">4、沟通与协作（1-15分）</label>
+                  <p className="text-xs text-slate-500">能高效对齐目标与方案，推动跨团队共识，清晰传递需求并协同落地。</p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max="15"
+                    value={communication || ''}
+                    onChange={(event) => setCommunication(Math.max(1, Math.min(15, parseInt(event.target.value) || 1)))} 
+                    className="w-20 rounded-md border border-slate-300 px-3 py-2 text-center text-sm"
+                  />
+                  <span className="ml-2 text-sm text-slate-500">分</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">5、主人翁精神（1-15分）</label>
+                  <p className="text-xs text-slate-500">端到端负责，主动发现并解决问题，跟进闭环交付与全生命周期质量。</p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max="15"
+                    value={ownership || ''}
+                    onChange={(event) => setOwnership(Math.max(1, Math.min(15, parseInt(event.target.value) || 1)))} 
+                    className="w-20 rounded-md border border-slate-300 px-3 py-2 text-center text-sm"
+                  />
+                  <span className="ml-2 text-sm text-slate-500">分</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium">6、学习速度和实验心态（1-15分）</label>
+                  <p className="text-xs text-slate-500">快速跟进技术/行业动态，敢于尝试、及时迭代，不墨守成规。</p>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="number"
+                    min="1"
+                    max="15"
+                    value={learningSpeed || ''}
+                    onChange={(event) => setLearningSpeed(Math.max(1, Math.min(15, parseInt(event.target.value) || 1)))} 
+                    className="w-20 rounded-md border border-slate-300 px-3 py-2 text-center text-sm"
+                  />
+                  <span className="ml-2 text-sm text-slate-500">分</span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between font-semibold border-t pt-3">
+                <label>总分</label>
+                <span>{productSense + systemDesign + agentAbility + communication + ownership + learningSpeed}</span>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>反馈内容</Label>
             <Textarea
-              rows={9}
+              rows={6}
               value={feedback}
               onChange={(event) => setFeedback(event.target.value)}
               placeholder="请输入候选人表现、岗位匹配度、建议等"

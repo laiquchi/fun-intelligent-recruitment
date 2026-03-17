@@ -263,6 +263,12 @@ app.post('/api/interviews/share/:shareId/feedback', async (req, res) => {
     }
     
     data[index].feedback = req.body.feedback;
+    data[index].productSense = req.body.productSense;
+    data[index].systemDesign = req.body.systemDesign;
+    data[index].agentAbility = req.body.agentAbility;
+    data[index].communication = req.body.communication;
+    data[index].ownership = req.body.ownership;
+    data[index].learningSpeed = req.body.learningSpeed;
     data[index].feedbackSubmitted = true;
     data[index].feedbackSubmittedAt = new Date().toISOString();
     

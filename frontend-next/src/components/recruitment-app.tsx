@@ -157,6 +157,12 @@ const DEFAULT_SHARE_FORM: ShareInterviewInfo & {
   shareLink: string;
   shareId: string;
   feedbackSubmitted: boolean;
+  productSense: number;
+  systemDesign: number;
+  agentAbility: number;
+  communication: number;
+  ownership: number;
+  learningSpeed: number;
 } = {
   id: 0,
   position: "",
@@ -165,7 +171,13 @@ const DEFAULT_SHARE_FORM: ShareInterviewInfo & {
   feedback: "",
   shareLink: "",
   shareId: "",
-  feedbackSubmitted: false
+  feedbackSubmitted: false,
+  productSense: 0,
+  systemDesign: 0,
+  agentAbility: 0,
+  communication: 0,
+  ownership: 0,
+  learningSpeed: 0
 };
 
 function normalizeRecruitment(item: RecruitmentItem): RecruitmentItem {
@@ -838,7 +850,15 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
 
   const submitFeedback = async () => {
     try {
-      await api.put(`/api/interviews/${feedbackForm.id}`, { feedback: feedbackForm.feedback });
+      await api.put(`/api/interviews/${feedbackForm.id}`, {
+        feedback: feedbackForm.feedback,
+        productSense: feedbackForm.productSense,
+        systemDesign: feedbackForm.systemDesign,
+        agentAbility: feedbackForm.agentAbility,
+        communication: feedbackForm.communication,
+        ownership: feedbackForm.ownership,
+        learningSpeed: feedbackForm.learningSpeed
+      });
       toast.success("反馈已保存");
       setFeedbackDialogOpen(false);
       await loadInterviews();
@@ -1473,9 +1493,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                     <TableCell className="max-w-[180px] truncate">{item.remarks || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline">
-                          发offer
-                        </Button>
+
                         <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(item)}>
                           <Link2 className="mr-1 h-3.5 w-3.5" />
                           反馈
@@ -1549,9 +1567,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                     <TableCell className="max-w-[220px] truncate">{item.remarks || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
-                        <Button size="sm" variant="outline">
-                          发offer
-                        </Button>
+
                         <Button size="sm" variant="outline" onClick={() => openFeedbackDialog(item)}>
                           <Link2 className="mr-1 h-3.5 w-3.5" />
                           反馈
@@ -2323,6 +2339,117 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                   </Button>
                 </div>
                 <Input value={feedbackForm.shareLink} readOnly placeholder="暂未生成分享链接" />
+              </div>
+            </Field>
+
+            <Field label="评价维度打分">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">1、产品感和结果品味（1-20分）</label>
+                    <p className="text-xs text-slate-500">能精准定义核心问题，清晰判断价值与目标，不盲目纠结实现细节。</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={feedbackForm.productSense || ''}
+                      onChange={(event) => setFeedbackForm((prev) => ({ ...prev, productSense: Math.max(1, Math.min(20, parseInt(event.target.value) || 1)) }))}
+                      className="w-20 text-center"
+                    />
+                    <span className="ml-2 text-sm text-slate-500">分</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">2、系统与架构判断力（1-20分）</label>
+                    <p className="text-xs text-slate-500">能评估方案的可行性、长期健康性与演进空间，兼顾落地成本与维护性。</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={feedbackForm.systemDesign || ''}
+                      onChange={(event) => setFeedbackForm((prev) => ({ ...prev, systemDesign: Math.max(1, Math.min(20, parseInt(event.target.value) || 1)) }))}
+                      className="w-20 text-center"
+                    />
+                    <span className="ml-2 text-sm text-slate-500">分</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">3、Agent 杠杆能力（1-20分）</label>
+                    <p className="text-xs text-slate-500">善用AI拆解任务、引导输出并快速纠偏，能评估结果并优化。</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="20"
+                      value={feedbackForm.agentAbility || ''}
+                      onChange={(event) => setFeedbackForm((prev) => ({ ...prev, agentAbility: Math.max(1, Math.min(20, parseInt(event.target.value) || 1)) }))}
+                      className="w-20 text-center"
+                    />
+                    <span className="ml-2 text-sm text-slate-500">分</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">4、沟通与协作（1-15分）</label>
+                    <p className="text-xs text-slate-500">能高效对齐目标与方案，推动跨团队共识，清晰传递需求并协同落地。</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={feedbackForm.communication || ''}
+                      onChange={(event) => setFeedbackForm((prev) => ({ ...prev, communication: Math.max(1, Math.min(15, parseInt(event.target.value) || 1)) }))}
+                      className="w-20 text-center"
+                    />
+                    <span className="ml-2 text-sm text-slate-500">分</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">5、主人翁精神（1-15分）</label>
+                    <p className="text-xs text-slate-500">端到端负责，主动发现并解决问题，跟进闭环交付与全生命周期质量。</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={feedbackForm.ownership || ''}
+                      onChange={(event) => setFeedbackForm((prev) => ({ ...prev, ownership: Math.max(1, Math.min(15, parseInt(event.target.value) || 1)) }))}
+                      className="w-20 text-center"
+                    />
+                    <span className="ml-2 text-sm text-slate-500">分</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="text-sm font-medium">6、学习速度和实验心态（1-15分）</label>
+                    <p className="text-xs text-slate-500">快速跟进技术/行业动态，敢于尝试、及时迭代，不墨守成规。</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      type="number"
+                      min="1"
+                      max="15"
+                      value={feedbackForm.learningSpeed || ''}
+                      onChange={(event) => setFeedbackForm((prev) => ({ ...prev, learningSpeed: Math.max(1, Math.min(15, parseInt(event.target.value) || 1)) }))}
+                      className="w-20 text-center"
+                    />
+                    <span className="ml-2 text-sm text-slate-500">分</span>
+                  </div>
+                </div>
+                <div className="flex items-center justify-between font-semibold">
+                  <label>总分</label>
+                  <span>{feedbackForm.productSense + feedbackForm.systemDesign + feedbackForm.agentAbility + feedbackForm.communication + feedbackForm.ownership + feedbackForm.learningSpeed}</span>
+                </div>
               </div>
             </Field>
 
