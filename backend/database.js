@@ -105,6 +105,7 @@ function normalizeInterviewRecord(item) {
     item.department ?? null,
     toBoolInt(item.isKeyFocus),
     toBoolInt(item.isCompleted),
+    toBoolInt(item.isPassed),
     item.school ?? null,
     item.major ?? null,
     item.remarks ?? null,
@@ -155,6 +156,7 @@ function mapInterviewRow(row) {
     department: row.department || '',
     isKeyFocus: Boolean(row.isKeyFocus),
     isCompleted: Boolean(row.isCompleted),
+    isPassed: Boolean(row.isPassed),
     school: row.school || '',
     major: row.major || '',
     remarks: row.remarks || '',
@@ -211,6 +213,7 @@ async function initDatabase() {
       department VARCHAR(255) NULL,
       is_key_focus TINYINT(1) NOT NULL DEFAULT 0,
       is_completed TINYINT(1) NOT NULL DEFAULT 0,
+      is_passed TINYINT(1) NOT NULL DEFAULT 0,
       school VARCHAR(255) NULL,
       major VARCHAR(255) NULL,
       remarks TEXT NULL,
@@ -319,6 +322,7 @@ async function readInterviews() {
       department,
       is_key_focus AS isKeyFocus,
       is_completed AS isCompleted,
+      is_passed AS isPassed,
       school,
       major,
       remarks,
@@ -358,6 +362,7 @@ async function writeInterviews(data) {
           department,
           is_key_focus,
           is_completed,
+          is_passed,
           school,
           major,
           remarks,
@@ -368,7 +373,7 @@ async function writeInterviews(data) {
           share_link,
           created_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
         normalizeInterviewRecord(item)
       );

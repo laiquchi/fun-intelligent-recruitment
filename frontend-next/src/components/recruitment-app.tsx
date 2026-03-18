@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft,
   CalendarClock,
+  Check,
   CheckCircle2,
   ClipboardCheck,
   Copy,
@@ -67,7 +68,7 @@ const VIEW_TITLE: Record<ViewKey, string> = {
   "social-recruiting": "招聘中",
   "social-completed": "已完成岗位",
   "social-interview-board": "面试安排看板",
-  "social-interview-passed": "面试通过",
+  "social-interview-passed": "面试通过名单",
   "social-interview-focus": "重点关注名单",
   "social-arrange-interview": "安排面试"
 };
@@ -80,7 +81,7 @@ const NAV_ITEMS: Array<{ key: ViewKey; label: string; children?: Array<{ key: Vi
     label: "查看面试安排",
     children: [
       { key: "social-interview-board", label: "面试安排看板" },
-      { key: "social-interview-passed", label: "面试通过" }
+      { key: "social-interview-passed", label: "面试通过名单" }
     ]
   },
   { key: "social-interview-focus", label: "重点关注名单" }
@@ -216,6 +217,7 @@ function normalizeInterview(item: InterviewItem): InterviewItem {
     department: item.department || "",
     isKeyFocus: Boolean(item.isKeyFocus),
     isCompleted: Boolean(item.isCompleted),
+    isPassed: Boolean(item.isPassed),
     school: item.school || "",
     major: item.major || "",
     remarks: item.remarks || "",
@@ -306,6 +308,8 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
   const [interviewFilters, setInterviewFilters] = useState<InterviewFilters>(DEFAULT_INTERVIEW_FILTERS);
   const [selectedItemIds, setSelectedItemIds] = useState<number[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [interviewCurrentPage, setInterviewCurrentPage] = useState(1);
+  const [interviewPageSize] = useState(10);
 
   const [recruitmentDialogOpen, setRecruitmentDialogOpen] = useState(false);
   const [editingRecruitmentId, setEditingRecruitmentId] = useState<number | null>(null);
@@ -389,7 +393,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
 
   // 当视图切换时发送 API 请求，获取数据
   useEffect(() => {
-    if (currentView === "social-interview-board" || currentView === "social-arrange-interview") {
+    if (currentView === "social-interview-board" || currentView === "social-arrange-interview" || currentView === "social-interview-passed") {
       void loadInterviews();
     }
     if (currentView === "social-interview-focus") {
@@ -436,6 +440,14 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
       return true;
     });
   }, [interviews, interviewFilters]);
+
+  const paginatedInterviews = useMemo(() => {
+    const startIndex = (interviewCurrentPage - 1) * interviewPageSize;
+    const endIndex = startIndex + interviewPageSize;
+    return filteredInterviews.slice(startIndex, endIndex);
+  }, [filteredInterviews, interviewCurrentPage, interviewPageSize]);
+
+  const totalPages = Math.ceil(filteredInterviews.length / interviewPageSize);
 
   const filteredPassedInterviews = useMemo(() => {
     return interviews.filter((interview) => {
@@ -732,6 +744,36 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
       remarks: item.remarks || ""
     });
     setInterviewDialogOpen(true);
+  };
+
+  const markInterviewAsPassed = async (item: InterviewItem) => {
+    try {
+      if (!window.confirm("确定将该候选人标记为面试通过吗？")) {
+        return;
+      }
+      await api.put(`/api/interviews/${item.id}`, { ...item, isPassed: true });
+      await loadInterviews();
+      await loadFocusInterviews();
+      toast.success("面试通过标记成功");
+    } catch (error) {
+      console.error(error);
+      toast.error("标记面试通过失败");
+    }
+  };
+
+  const markInterviewAsNotPassed = async (item: InterviewItem) => {
+    try {
+      if (!window.confirm("确定将该候选人从面试通过名单中移除吗？")) {
+        return;
+      }
+      await api.put(`/api/interviews/${item.id}`, { ...item, isPassed: false });
+      await loadInterviews();
+      await loadFocusInterviews();
+      toast.success("已从面试通过名单中移除");
+    } catch (error) {
+      console.error(error);
+      toast.error("移除失败");
+    }
   };
 
   const saveInterview = async () => {
@@ -1465,7 +1507,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredInterviews.map((item) => (
+                {paginatedInterviews.map((item) => (
                   <TableRow
                     key={item.id}
                     className={cn(item.isCompleted ? "bg-slate-100/90 text-slate-500" : "")}
@@ -1502,6 +1544,17 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                           <Pencil className="mr-1 h-3.5 w-3.5" />
                           编辑
                         </Button>
+                        {item.isPassed ? (
+                          <Button size="sm" variant="outline" disabled>
+                            <Check className="mr-1 h-3.5 w-3.5" />
+                            已通过
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="default" onClick={() => void markInterviewAsPassed(item)}>
+                            <Check className="mr-1 h-3.5 w-3.5" />
+                            面试通过
+                          </Button>
+                        )}
                         <Button size="sm" variant="destructive" onClick={() => void deleteInterview(item.id)}>
                           <Trash2 className="mr-1 h-3.5 w-3.5" />
                           删除
@@ -1510,7 +1563,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                     </TableCell>
                   </TableRow>
                 ))}
-                {filteredInterviews.length === 0 && (
+                {paginatedInterviews.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={11} className="h-24 text-center text-slate-500">
                       暂无匹配的面试安排
@@ -1520,6 +1573,43 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
               </TableBody>
             </Table>
           </div>
+          {filteredInterviews.length > 0 && (
+            <div className="flex items-center justify-between px-4 py-3">
+              <div className="text-sm text-slate-600">
+                显示第 {(interviewCurrentPage - 1) * interviewPageSize + 1} 到 {Math.min(interviewCurrentPage * interviewPageSize, filteredInterviews.length)} 条，共 {filteredInterviews.length} 条
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInterviewCurrentPage((prev) => Math.max(1, prev - 1))}
+                  disabled={interviewCurrentPage === 1}
+                >
+                  上一页
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <Button
+                      key={page}
+                      variant={interviewCurrentPage === page ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setInterviewCurrentPage(page)}
+                    >
+                      {page}
+                    </Button>
+                  ))}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setInterviewCurrentPage((prev) => Math.min(totalPages, prev + 1))}
+                  disabled={interviewCurrentPage === totalPages}
+                >
+                  下一页
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     );
@@ -1605,7 +1695,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
         <CardHeader className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <CardTitle className="text-xl">面试通过</CardTitle>
+              <CardTitle className="text-xl">面试通过名单</CardTitle>
               <CardDescription>查看已通过面试的候选人</CardDescription>
             </div>
             <div className="flex flex-wrap items-center gap-2">
@@ -1687,9 +1777,16 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                           <Pencil className="mr-1 h-3.5 w-3.5" />
                           编辑
                         </Button>
-                        <Button size="sm" variant="destructive" onClick={() => void deleteInterview(item.id)}>
+                        <Button size="sm" variant="default" onClick={() => {
+                          // 跳转到发offer页面，传递候选人ID
+                          window.location.href = `/offer?candidateId=${item.id}`;
+                        }}>
+                          <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
+                          发offer
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => void markInterviewAsNotPassed(item)}>
                           <Trash2 className="mr-1 h-3.5 w-3.5" />
-                          删除
+                          移除
                         </Button>
                       </div>
                     </TableCell>
