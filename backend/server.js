@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const axios = require('axios');
 const os = require('os');
+const nodemailer = require('nodemailer');
+const pdf = require('html-pdf');
 
 const { readConfig, writeConfig } = require('./config');
 const {
@@ -408,16 +410,13 @@ app.get('/api/config', async (req, res) => {
 
 app.post('/api/config', async (req, res) => {
   try {
-    const { llm } = req.body;
-    
-    if (!llm) {
-      return res.status(400).json({ error: '缺少配置参数' });
-    }
+    const { llm, email } = req.body;
     
     const currentConfig = await readConfig();
     const newConfig = {
       ...currentConfig,
-      llm: { ...currentConfig.llm, ...llm }
+      ...(llm && { llm: { ...currentConfig.llm, ...llm } }),
+      ...(email && { email: { ...currentConfig.email, ...email } })
     };
     
     const success = await writeConfig(newConfig);
@@ -550,6 +549,224 @@ app.post('/api/llm/interview-recognition', async (req, res) => {
     } else {
       res.status(500).json({ error: '大模型调用失败: ' + (error.message || '未知错误') });
     }
+  }
+});
+
+app.post('/api/send-offer-email', async (req, res) => {
+  try {
+    const { candidateName, email, offerData } = req.body;
+    
+    if (!candidateName || !email) {
+      return res.status(400).json({ error: '缺少必要参数' });
+    }
+    
+    const config = await readConfig();
+    const emailConfig = config.email || {};
+    
+    if (!emailConfig.host || !emailConfig.user || !emailConfig.password) {
+      return res.status(400).json({ error: '邮件配置不完整，请先配置邮件服务器' });
+    }
+    
+    // 生成HTML内容
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="zh-CN">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>录用通知书</title>
+        <style>
+          body {
+            font-family: "Microsoft YaHei", Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+          }
+          .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #ddd;
+          }
+          .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6600;
+            margin-right: 20px;
+          }
+          .logo span {
+            color: #333;
+          }
+          .company-name {
+            font-size: 18px;
+            color: #666;
+          }
+          h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 40px;
+          }
+          .section {
+            margin-bottom: 30px;
+          }
+          .section-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 15px;
+            color: #34495e;
+          }
+          .info-item {
+            margin-bottom: 10px;
+          }
+          .info-label {
+            display: inline-block;
+            width: 120px;
+            font-weight: bold;
+          }
+          .footer {
+            margin-top: 50px;
+            text-align: right;
+            font-style: italic;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">
+            <span style="color: #ff6600; font-weight: bold;">➤</span>
+            <span style="font-weight: bold;">风行</span>
+          </div>
+          <div class="company-name">
+            <span style="color: #ff6600; font-weight: bold; text-decoration: underline;">FUNSHION</span>
+            <span> ONLINE TECHNOLOGIES CO., LTD.</span>
+          </div>
+        </div>
+        <h1>OFFER LETTER (录用通知书)</h1>
+        
+        <div class="section">
+          <p>尊敬的: ${candidateName} 先生/女士</p>
+          <p>我们非常荣幸的通知您，您将被武汉风行在线技术有限公司聘用。具体事宜如下：</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">岗位情况：</div>
+          <p>您将就职于 ${offerData.department || '__________'} 的 ${offerData.position || '__________'} 职位。</p>
+          <p>您的直接主管是 ${offerData.directManager || '__________'}，您的入职导师是 ${offerData.mentor || '__________'}，您的职级是 ${offerData.level || '__________'}。</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">薪资说明</div>
+          <p>您在本职位的税前月薪为：</p>
+          <p>基本工资 RMB ${offerData.basicSalary || '__________'} 元，绩效工资 RMB ${offerData.performanceSalary || '__________'} 元，${offerData.months || '__________'} 薪，提成/奖金根据业务情况发放。</p>
+          <p>公司将根据国家的法律法规代扣代缴个人所得税。</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">报到事宜</div>
+          <p>报到时间及地点：</p>
+          <p>请您在 ${offerData.startDate ? new Date(offerData.startDate).getFullYear() : '____'} 年 ${offerData.startDate ? new Date(offerData.startDate).getMonth() + 1 : '____'} 月 ${offerData.startDate ? new Date(offerData.startDate).getDate() : '____'} 日上午 ${offerData.startHour || '____'} 点之前到公司人力资源部报到。</p>
+          <p>地址：湖北省武汉市东湖新技术开发区金融港一路7号光谷智慧园17栋。</p>
+          <p>联系人：曹芷薇  联系方式：027-81707372  E-mail：caozw@fun.tv</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">报到所需证件</div>
+          <ol>
+            <li>身份证、学生证复印件(非实习生及已经毕业的应届生不需要提供学生证)</li>
+            <li>应聘简历上提及的毕业证、学位证及学信网学位证明文件，及其他认为必要的证件原件及复印件</li>
+            <li>上家公司的离职证明原件（实习生不需提供）</li>
+            <li>如需新办理社保卡（新开户），请自行到社保就近银行办理。其他情况可咨询HR曹芷薇/康书维</li>
+            <li>户口本首页及本人页的复印件，有变更项目的还需提供变更页复印件（实习生可在毕业前提供）</li>
+            <li>工资卡为浦发银行，请自行到就近银行办理（如已有银行卡请在银行卡复印件上注明姓名、卡号、开户行名称）。</li>
+          </ol>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">体检</div>
+          <p>公司会安排统一的入职体检，时间及地点：请您告知HR您选择的体检分院，请携带身份证按照预约时间到指定分院体检。体检不合格者将不予以录用。</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">特殊说明</div>
+          <p>如您在入职前被发现面试环节向公司有关人员行贿或承诺好处、提供虚假信息或简历造假、在其他公司任职期间出现严重违纪行为、涉嫌刑事犯罪、公开发表与我司核心价值观相悖言论、传播不实言论、打探公司内部员工隐私、威胁恐吓辱骂公司员工、推迟入职时间未达成一致、被告知企业HC临时关闭等情况，此 offer 将自动失效。</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">录用确认</div>
+          <p>请您在收到本《录用通知书》后，三个工作日内以电子邮件的形式回复是否认同并接受本《录用通知书》的全部条款。如果您有任何问题请及时与我们联系反馈。 未在有效时间内回复确认，视为放弃入职。</p>
+          <p>本录用通知书只是双方建立劳动关系的意向，不能作为建立劳动合同关系的凭证。公司与您之间劳动关系的建立以劳动合同的签订日期为准。</p>
+        </div>
+        
+        <div class="section">
+          <div class="section-title">公司愿景：致力于成为领先的AI文娱生态平台</div>
+          <div class="section-title">公司使命：让内容流动更简单</div>
+          <div class="section-title">公司价值观：用心做事  诚心待人 虚心求变</div>
+        </div>
+        
+        <div class="footer">
+          <p style="text-align: left;">期待您加入风行大家庭！</p>
+          <p style="text-align: left;">为了您的方便，请在入职时准备一个心怡的自用水杯哦^_^</p>
+          <p style="text-align: right;">武汉风行在线技术有限公司</p>
+          <p style="text-align: right;">${new Date().toLocaleDateString()}</p>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    // 生成PDF
+    const pdfBuffer = await new Promise((resolve, reject) => {
+      pdf.create(htmlContent).toBuffer((err, buffer) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(buffer);
+        }
+      });
+    });
+    
+    const transporter = nodemailer.createTransport({
+      host: emailConfig.host,
+      port: parseInt(emailConfig.port || '465'),
+      secure: true,
+      auth: {
+        user: emailConfig.user,
+        pass: emailConfig.password
+      }
+    });
+    
+    const mailOptions = {
+      from: emailConfig.from || emailConfig.user,
+      to: email,
+      subject: `恭喜并欢迎加入风行，请查阅offer并准备相关资料`,
+      text: `你好，欢迎加入风行！
+收到offer之后请将个人资料准备齐全。
+如有其它疑问，欢迎随时联系，谢谢！`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0; padding: 0; text-align: left; width: 100%;">
+          <p style="margin: 10px 0; text-align: left;">你好，欢迎加入风行！</p>
+          <p style="margin: 10px 0; text-align: left;">收到offer之后请将个人资料准备齐全。</p>
+          <p style="margin: 10px 0; text-align: left;">如有其它疑问，欢迎随时联系，谢谢！</p>
+        </div>
+      `,
+      attachments: [
+        {
+          filename: `OFFER LETTER-${candidateName}.pdf`,
+          content: pdfBuffer
+        }
+      ]
+    };
+    
+    await transporter.sendMail(mailOptions);
+    res.json({ success: true, message: '邮件发送成功' });
+  } catch (error) {
+    console.error('发送邮件失败:', error);
+    res.status(500).json({ error: '发送邮件失败: ' + (error.message || '未知错误') });
   }
 });
 

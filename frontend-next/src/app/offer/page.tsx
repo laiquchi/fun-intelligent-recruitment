@@ -30,6 +30,7 @@ export default function OfferPage({ searchParams }: OfferPageProps) {
     months: '12',
     startDate: '',
     startHour: '9',
+    email: ''
   });
 
   useEffect(() => {
@@ -51,6 +52,7 @@ export default function OfferPage({ searchParams }: OfferPageProps) {
               months: '12',
               startDate: '',
               startHour: '9',
+              email: candidateData.phone || ''
             });
           } else {
             toast.error('未找到候选人信息');
@@ -71,9 +73,23 @@ export default function OfferPage({ searchParams }: OfferPageProps) {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    // 这里可以添加发送offer的逻辑
-    toast.success('Offer已发送');
-    // 可以添加跳转到其他页面的逻辑
+    
+    if (!offerForm.email) {
+      toast.error('请填写收件人邮箱');
+      return;
+    }
+    
+    try {
+      await api.post('/api/send-offer-email', {
+        candidateName: candidate.candidateName,
+        email: offerForm.email,
+        offerData: offerForm
+      });
+      toast.success('Offer邮件发送成功');
+    } catch (error) {
+      console.error('发送Offer邮件失败:', error);
+      toast.error('发送Offer邮件失败，请检查邮件配置');
+    }
   };
 
   if (isLoading) {
@@ -129,6 +145,16 @@ export default function OfferPage({ searchParams }: OfferPageProps) {
                     value={offerForm.mentor}
                     onChange={(e) => setOfferForm({ ...offerForm, mentor: e.target.value })}
                     placeholder="请输入入职导师姓名"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">收件人邮箱 *</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={offerForm.email}
+                    onChange={(e) => setOfferForm({ ...offerForm, email: e.target.value })}
+                    placeholder="请输入候选人邮箱地址"
                   />
                 </div>
                 <div className="space-y-2">

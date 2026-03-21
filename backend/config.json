@@ -3,5 +3,12 @@
     "apiKey": "sk-8e78660ba8034d528093e4fd7839f7df",
     "baseURL": "https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation",
     "model": "qwen-vl-max"
+  },
+  "email": {
+    "host": "smtp.exmail.qq.com",
+    "port": "465",
+    "user": "caozw@fun.tv",
+    "password": "t9JzF6UmGsj2ddt8",
+    "from": "caozw@fun.tv"
   }
 }

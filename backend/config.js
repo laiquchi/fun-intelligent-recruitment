@@ -16,6 +16,13 @@ const readConfig = async () => {
         apiKey: '',
         baseURL: 'https://dashscope.aliyuncs.com/api/v1/services/aigc/multimodal-generation/generation',
         model: 'qwen-vl-max'
+      },
+      email: {
+        host: '',
+        port: '465',
+        user: '',
+        password: '',
+        from: ''
       }
     };
   }

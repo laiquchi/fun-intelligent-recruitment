@@ -222,6 +222,12 @@ function normalizeInterview(item: InterviewItem): InterviewItem {
     major: item.major || "",
     remarks: item.remarks || "",
     feedback: item.feedback || "",
+    productSense: item.productSense || 0,
+    systemDesign: item.systemDesign || 0,
+    agentAbility: item.agentAbility || 0,
+    communication: item.communication || 0,
+    ownership: item.ownership || 0,
+    learningSpeed: item.learningSpeed || 0,
     feedbackSubmitted: Boolean(item.feedbackSubmitted),
     feedbackSubmittedAt: item.feedbackSubmittedAt || "",
     shareId: item.shareId || "",
@@ -854,7 +860,13 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
       feedback: item.feedback || "",
       shareId: item.shareId || "",
       shareLink: item.shareLink || "",
-      feedbackSubmitted: Boolean(item.feedbackSubmitted)
+      feedbackSubmitted: Boolean(item.feedbackSubmitted),
+      productSense: item.productSense || 0,
+      systemDesign: item.systemDesign || 0,
+      agentAbility: item.agentAbility || 0,
+      communication: item.communication || 0,
+      ownership: item.ownership || 0,
+      learningSpeed: item.learningSpeed || 0
     });
     setFeedbackDialogOpen(true);
   };
@@ -1502,6 +1514,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                   <TableHead>类型</TableHead>
                   <TableHead>重点</TableHead>
                   <TableHead>反馈</TableHead>
+                  <TableHead>总分</TableHead>
                   <TableHead>备注</TableHead>
                   <TableHead className="w-[240px]">操作</TableHead>
                 </TableRow>
@@ -1532,6 +1545,13 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-[250px] truncate">{item.feedback || "未填写"}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const total = (item.productSense || 0) + (item.systemDesign || 0) + (item.agentAbility || 0) +
+                                     (item.communication || 0) + (item.ownership || 0) + (item.learningSpeed || 0);
+                        return total > 0 ? total : "-";
+                      })()}
+                    </TableCell>
                     <TableCell className="max-w-[180px] truncate">{item.remarks || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
@@ -1565,7 +1585,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                 ))}
                 {paginatedInterviews.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={11} className="h-24 text-center text-slate-500">
+                    <TableCell colSpan={12} className="h-24 text-center text-slate-500">
                       暂无匹配的面试安排
                     </TableCell>
                   </TableRow>
@@ -1742,6 +1762,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                   <TableHead>类型</TableHead>
                   <TableHead>重点</TableHead>
                   <TableHead>反馈</TableHead>
+                  <TableHead>总分</TableHead>
                   <TableHead>备注</TableHead>
                   <TableHead className="w-[180px]">操作</TableHead>
                 </TableRow>
@@ -1766,6 +1787,13 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                       </Badge>
                     </TableCell>
                     <TableCell className="max-w-[250px] truncate">{item.feedback || "未填写"}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const total = (item.productSense || 0) + (item.systemDesign || 0) + (item.agentAbility || 0) +
+                                     (item.communication || 0) + (item.ownership || 0) + (item.learningSpeed || 0);
+                        return total > 0 ? total : "-";
+                      })()}
+                    </TableCell>
                     <TableCell className="max-w-[180px] truncate">{item.remarks || "-"}</TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-2">
@@ -1794,7 +1822,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                 ))}
                 {filteredPassedInterviews.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={10} className="h-24 text-center text-slate-500">
+                    <TableCell colSpan={11} className="h-24 text-center text-slate-500">
                       暂无面试通过的候选人
                     </TableCell>
                   </TableRow>
@@ -2050,6 +2078,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                     <TableHead>面试官</TableHead>
                     <TableHead>重点</TableHead>
                     <TableHead>反馈</TableHead>
+                    <TableHead>总分</TableHead>
                     <TableHead className="w-[220px]">操作</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -2063,6 +2092,13 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                       <TableCell>{item.interviewer || "-"}</TableCell>
                       <TableCell>{item.isKeyFocus ? "是" : "否"}</TableCell>
                       <TableCell className="max-w-[220px] truncate">{item.feedback || "未填写"}</TableCell>
+                      <TableCell>
+                        {(() => {
+                          const total = (item.productSense || 0) + (item.systemDesign || 0) + (item.agentAbility || 0) +
+                                       (item.communication || 0) + (item.ownership || 0) + (item.learningSpeed || 0);
+                          return total > 0 ? total : "-";
+                        })()}
+                      </TableCell>
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
                           <Button size="sm" variant="outline" onClick={() => openEditInterview(item)}>
@@ -2080,7 +2116,7 @@ export function RecruitmentApp({ onLogout }: RecruitmentAppProps) {
                   ))}
                   {positionInterviews.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={8} className="h-20 text-center text-slate-500">
+                      <TableCell colSpan={9} className="h-20 text-center text-slate-500">
                         该岗位暂无面试安排
                       </TableCell>
                     </TableRow>
